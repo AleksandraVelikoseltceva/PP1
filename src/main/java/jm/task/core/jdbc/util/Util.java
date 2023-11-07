@@ -36,17 +36,4 @@ public class Util {
         }
         return sessionFactory;
     }
-
-    public static Connection getConnection() {
-        String URL = "jdbc:mysql://localhost:3306/users";
-        String USER = "root";
-        String PASSWORD = "Qazxswec1904";
-        try {
-            return DriverManager.getConnection(URL, USER, PASSWORD);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-
 }
