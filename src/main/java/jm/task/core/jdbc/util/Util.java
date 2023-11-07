@@ -33,10 +33,6 @@ public class Util {
         return instance;
     }
 
-    public Connection getConnection() {
-        return conn;
-    }
-
     private static Properties getProps() throws IOException {
         Properties props = new Properties();
         try (InputStream in = Files.newInputStream(Paths.get(Util.class.getResource("/database").toURI()))) {
@@ -45,5 +41,9 @@ public class Util {
         } catch (IOException | URISyntaxException e) {
             throw new IOException("Database config file not found", e);
         }
+    }
+
+    public Connection getConnection() {
+        return conn;
     }
 }
