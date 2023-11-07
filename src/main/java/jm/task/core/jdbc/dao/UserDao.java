@@ -1,5 +1,6 @@
 package jm.task.core.jdbc.dao;
 
+import com.mysql.cj.x.protobuf.MysqlxDatatypes;
 import jm.task.core.jdbc.model.User;
 
 import java.util.List;
