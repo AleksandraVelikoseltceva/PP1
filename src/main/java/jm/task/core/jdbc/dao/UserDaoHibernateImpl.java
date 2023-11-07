@@ -7,86 +7,90 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 
-import javax.persistence.PersistenceException;
+import javax.persistence.Query;
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UserDaoHibernateImpl implements UserDao {
-    private static final Util utilInstance = Util.getInstance();
-    private static final SessionFactory sessionFactory = utilInstance.getSessionFactory();
-    private Transaction tx = null;
+    private final Connection connection;
 
     public UserDaoHibernateImpl() {
-
+        connection = Util.getConnection();
     }
 
     @Override
     public void createUsersTable() {
-        try (Session session = sessionFactory.openSession()) {
-            Transaction tx = session.beginTransaction();
-            session.createSQLQuery("CREATE TABLE IF NOT EXISTS " + utilInstance.getTableName("User") +
-                            "(id bigint not null auto_increment, age tinyint, last_name varchar(255), name varchar(255), " +
+        Transaction transaction = null;
+        try (Session session = Util.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            session.createSQLQuery("CREATE TABLE IF NOT EXISTS users (" +
+                            "id bigint not null auto_increment," +
+                            "name varchar(255)," +
+                            "age tinyint, last_name varchar(255)," +
                             "primary key (id))")
+                    .addEntity(User.class)
                     .executeUpdate();
-            tx.commit();
-        } catch (PersistenceException e) {
+            transaction.commit();
+        } catch (HibernateException e) {
             e.printStackTrace();
-            if (null != tx) {
-                tx.rollback();
+            if (null != transaction) {
+                transaction.rollback();
             }
         }
     }
 
     @Override
     public void dropUsersTable() {
-        try (Session session = sessionFactory.openSession()) {
-            tx = session.beginTransaction();
-            session.createSQLQuery("DROP TABLE IF EXISTS " + utilInstance.getTableName("User"))
+        Transaction transaction = null;
+        try (Session session = Util.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            session.createSQLQuery("DROP TABLE IF EXISTS users")
+                    .addEntity(User.class)
                     .executeUpdate();
-            tx.commit();
-        } catch (PersistenceException e) {
+            transaction.commit();
+        } catch (HibernateException e) {
             e.printStackTrace();
-            if (null != tx) {
-                tx.rollback();
+            if (null != transaction) {
+                transaction.rollback();
             }
         }
     }
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
-        try (Session session = sessionFactory.openSession()) {
-            Transaction tx = session.beginTransaction();
-            session.persist(new User(name, lastName, (byte) age));
-            tx.commit();
-        } catch (PersistenceException e) {
-            e.printStackTrace();
-            if (null != tx) {
-                tx.rollback();
+        Transaction transaction = null;
+        try (Session session = Util.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            session.save(new User(name, lastName, (byte) age));
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
             }
+            e.printStackTrace();
         }
     }
 
     @Override
     public void removeUserById(long id) {
-        try (Session session = sessionFactory.openSession()) {
-            tx = session.beginTransaction();
-            User user = (User) session.get(User.class, id);
-            if (null != user) {
-                session.delete(user);
-            }
-            tx.commit();
-        } catch (PersistenceException e) {
+        Transaction transaction = null;
+        try (Session session = Util.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            session.createQuery("DELETE User WHERE id = " + id).executeUpdate();
+            transaction.commit();
+        } catch (HibernateException e) {
             e.printStackTrace();
-            if (null != tx) {
-                tx.rollback();
+            if (null != transaction) {
+                transaction.rollback();
             }
         }
     }
 
     @Override
     public List<User> getAllUsers() {
-        try (Session session = sessionFactory.openSession()) {
-            return session.createQuery("FROM User").list();
+        try (Session session = Util.getSessionFactory().openSession()) {
+            return session.createQuery("from User").list();
         } catch (HibernateException e) {
             e.printStackTrace();
         }
@@ -97,15 +101,17 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void cleanUsersTable() {
-        try (Session session = sessionFactory.openSession()) {
-            tx = session.beginTransaction();
-            session.createSQLQuery("TRUNCATE TABLE " + utilInstance.getTableName("User"))
+        Transaction transaction = null;
+        try (Session session = Util.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            session.createSQLQuery("TRUNCATE TABLE User")
+                    .addEntity(User.class)
                     .executeUpdate();
-            tx.commit();
-        } catch (PersistenceException e) {
+            session.getTransaction().commit();
+        } catch (HibernateException e) {
             e.printStackTrace();
-            if (null != tx) {
-                tx.rollback();
+            if (null != transaction) {
+                transaction.rollback();
             }
         }
     }

@@ -5,56 +5,48 @@ import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.service.ServiceRegistry;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+import java.util.Properties;
+
 public class Util {
-    private static Util instance = null;
     private static SessionFactory sessionFactory;
-    private static Metadata metadata;
 
-    public static Util getInstance() {
-        if (null == instance) {
-            instance = new Util();
+    public static SessionFactory getSessionFactory() {
+        if (sessionFactory == null) {
+            try {
+                Configuration factory = new Configuration()
+                        .configure("hibernate.cfg.xml")
+                        .addAnnotatedClass(User.class);
+
+                ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
+                        .applySettings(factory.getProperties()).build();
+
+                sessionFactory = factory.buildSessionFactory(serviceRegistry);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-        return instance;
-    }
-
-    private Util() {
-        if (null == sessionFactory) {
-            ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
-                    .applySetting(Environment.USE_SQL_COMMENTS, false)
-                    .applySetting(Environment.SHOW_SQL, true)
-                    .applySetting(Environment.HBM2DDL_AUTO, "update")
-                    .build();
-            sessionFactory = makeSessionFactory(serviceRegistry);
-        }
-    }
-
-    public SessionFactory getSessionFactory() {
         return sessionFactory;
     }
 
-    private static SessionFactory makeSessionFactory(ServiceRegistry serviceRegistry) {
-        metadata = new MetadataSources(serviceRegistry)
-                .addAnnotatedClass(User.class)
-                .getMetadataBuilder()
-                .build();
-        return metadata.buildSessionFactory();
+    public static Connection getConnection() {
+        String URL = "jdbc:mysql://localhost:3306/users";
+        String USER = "root";
+        String PASSWORD = "Qazxswec1904";
+        try {
+            return DriverManager.getConnection(URL, USER, PASSWORD);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public String getTableName(String entityName) throws NullPointerException {
-        if (null == metadata) {
-            throw new NullPointerException("Metadata is null");
-        }
 
-        for (PersistentClass persistentClass : Util.metadata.getEntityBindings()) {
-            if (entityName.equals(persistentClass.getJpaEntityName())) {
-                return persistentClass.getTable().getName();
-            }
-        }
-
-        throw new NullPointerException(String.format("Entity {%s} not found", entityName));
-    }
 }
