@@ -6,14 +6,13 @@ import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class UserDaoHibernateImpl implements UserDao {
-
-    private final Logger logger = Logger.getLogger(UserDaoHibernateImpl.class.getName());
-
+    private Transaction transaction = null;
     public UserDaoHibernateImpl() {
 
     }
@@ -21,7 +20,7 @@ public class UserDaoHibernateImpl implements UserDao {
     @Override
     public void createUsersTable() {
         try (Session session = Util.getSessionFactory().openSession()) {
-            Transaction transaction = session.beginTransaction();
+            transaction = session.beginTransaction();
             String sql =
                     "CREATE TABLE IF NOT EXISTS users (" +
                             "id       bigint auto_increment primary key," +
@@ -32,7 +31,6 @@ public class UserDaoHibernateImpl implements UserDao {
             session.createSQLQuery(sql).executeUpdate();
             transaction.commit();
         } catch (HibernateException e) {
-            logger.log(Level.SEVERE, "Ошибка при создании таблицы в БД", e);
             e.printStackTrace();
         }
     }
@@ -40,12 +38,11 @@ public class UserDaoHibernateImpl implements UserDao {
     @Override
     public void dropUsersTable() {
         try (Session session = Util.getSessionFactory().openSession()) {
-            Transaction transaction = session.beginTransaction();
+            transaction = session.beginTransaction();
             String sql = "DROP TABLE IF EXISTS users";
             session.createSQLQuery(sql).executeUpdate();
             transaction.commit();
         } catch (HibernateException e) {
-            logger.log(Level.SEVERE, "Ошибка при удалении таблицы из БД", e);
             e.printStackTrace();
         }
     }
@@ -53,24 +50,28 @@ public class UserDaoHibernateImpl implements UserDao {
     @Override
     public void saveUser(String name, String lastName, byte age) {
         try (Session session = Util.getSessionFactory().openSession()) {
-            Transaction transaction = session.beginTransaction();
+            transaction = session.beginTransaction();
             session.save(new User(name, lastName, age));
             transaction.commit();
         } catch (HibernateException e) {
-            logger.log(Level.SEVERE, "Ошибка при сохранении пользователя в БД", e);
             e.printStackTrace();
+            if (null != transaction) {
+                transaction.rollback();
+            }
         }
     }
 
     @Override
     public void removeUserById(long id) {
         try (Session session = Util.getSessionFactory().openSession()) {
-            Transaction transaction = session.beginTransaction();
+            transaction = session.beginTransaction();
             session.createQuery("DELETE User WHERE id = " + id).executeUpdate();
             transaction.commit();
         } catch (HibernateException e) {
-            logger.log(Level.SEVERE, "Ошибка при удалении пользователя из БД", e);
             e.printStackTrace();
+            if (null != transaction) {
+                transaction.rollback();
+            }
         }
     }
 
@@ -79,10 +80,9 @@ public class UserDaoHibernateImpl implements UserDao {
         try (Session session = Util.getSessionFactory().openSession()) {
             return (List<User>) session.createQuery("FROM User").list();
         } catch (HibernateException e) {
-            logger.log(Level.SEVERE, "Ошибка при получении пользователей из БД", e);
             e.printStackTrace();
         }
-        return null;
+        return new ArrayList<>();
     }
 
     @Override
@@ -92,8 +92,10 @@ public class UserDaoHibernateImpl implements UserDao {
             session.createQuery("DELETE FROM User").executeUpdate();
             session.getTransaction().commit();
         } catch (HibernateException e) {
-            logger.log(Level.SEVERE, "Ошибка при отчистке таблицы в БД", e);
             e.printStackTrace();
+            if (null != transaction) {
+                transaction.rollback();
+            }
         }
     }
 }
