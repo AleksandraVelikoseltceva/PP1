@@ -46,4 +46,6 @@ public class Util {
     public Connection getConnection() {
         return conn;
     }
+
+    public static void closeConnection() throws SQLException { conn.close();}
 }

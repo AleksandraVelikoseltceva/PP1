@@ -14,6 +14,7 @@ public class UserDaoJDBCImpl implements UserDao {
 
     }
 
+    @Override
     public void createUsersTable() {
         try (Statement statement = conn.createStatement()) {
             statement.executeUpdate("CREATE TABLE IF NOT EXISTS users " +
@@ -22,7 +23,7 @@ public class UserDaoJDBCImpl implements UserDao {
             e.printStackTrace();
         }
     }
-
+    @Override
     public void dropUsersTable() {
         try (Statement statement = conn.createStatement()) {
             statement.executeUpdate("DROP TABLE IF EXISTS users");
@@ -30,7 +31,7 @@ public class UserDaoJDBCImpl implements UserDao {
             e.printStackTrace();
         }
     }
-
+    @Override
     public void saveUser(String name, String lastName, byte age) {
         try (PreparedStatement pstm = conn.prepareStatement("INSERT INTO users (name, last_name, age) VALUES (?, ?, ?)")) {
             pstm.setString(1, name);
@@ -41,7 +42,7 @@ public class UserDaoJDBCImpl implements UserDao {
             e.printStackTrace();
         }
     }
-
+    @Override
     public void removeUserById(long id) {
         try (PreparedStatement pstm = conn.prepareStatement("DELETE FROM users WHERE id = ?")) {
             pstm.setLong(1, id);
@@ -50,7 +51,7 @@ public class UserDaoJDBCImpl implements UserDao {
             e.printStackTrace();
         }
     }
-
+    @Override
     public List<User> getAllUsers() {
         List<User> users = new ArrayList<>();
 
@@ -67,7 +68,7 @@ public class UserDaoJDBCImpl implements UserDao {
 
         return users;
     }
-
+    @Override
     public void cleanUsersTable() {
         try (Statement statement = conn.createStatement()) {
             statement.executeUpdate("TRUNCATE TABLE users");
